@@ -44,8 +44,8 @@ type CCL = CCLang<NullHandle, String, NullIO>;
 #[test]
 pub fn equal_0() {
     let script = Script::from(vec![
-        CCL::Integer(0),
-        CCL::Integer(0),
+        CCL::IOIndex(0),
+        CCL::IOIndex(0),
         CCL::Equal
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -65,7 +65,7 @@ pub fn equal_0() {
 pub fn equal_1() {
     let script = Script::from(vec![
         CCL::Boolean(false),
-        CCL::Integer(0),
+        CCL::IOIndex(0),
         CCL::Equal
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -85,7 +85,7 @@ pub fn equal_1() {
 pub fn equal_2() {
     let script = Script::from(vec![
         CCL::Boolean(true),
-        CCL::Integer(10),
+        CCL::IOIndex(10),
         CCL::Equal
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -144,8 +144,8 @@ pub fn equal_4() {
 #[test]
 pub fn not_equal_0() {
     let script = Script::from(vec![
-        CCL::Integer(0),
-        CCL::Integer(1),
+        CCL::IOIndex(0),
+        CCL::IOIndex(1),
         CCL::NotEqual
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -185,7 +185,7 @@ pub fn not_equal_1() {
 pub fn not_equal_2() {
     let script = Script::from(vec![
         CCL::Boolean(true),
-        CCL::Integer(0),
+        CCL::IOIndex(0),
         CCL::NotEqual
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -244,8 +244,8 @@ pub fn not_equal_4() {
 #[test]
 pub fn less_than_0() {
     let script = Script::from(vec![
-        CCL::Integer(0),
-        CCL::Integer(1),
+        CCL::IOIndex(0),
+        CCL::IOIndex(1),
         CCL::LessThan
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -284,7 +284,7 @@ pub fn less_than_1() {
 #[test]
 pub fn less_than_2() {
     let script = Script::from(vec![
-        CCL::Integer(0),
+        CCL::IOIndex(0),
         CCL::Boolean(true),
         CCL::LessThan
     ]);
@@ -344,8 +344,8 @@ pub fn less_than_4() {
 #[test]
 pub fn less_than_equal_0() {
     let script = Script::from(vec![
-        CCL::Integer(0),
-        CCL::Integer(0),
+        CCL::IOIndex(0),
+        CCL::IOIndex(0),
         CCL::LessThanEqual
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -384,7 +384,7 @@ pub fn less_than_equal_1() {
 #[test]
 pub fn less_than_equal_2() {
     let script = Script::from(vec![
-        CCL::Integer(0),
+        CCL::IOIndex(0),
         CCL::Boolean(true),
         CCL::LessThanEqual
     ]);
@@ -444,8 +444,8 @@ pub fn less_than_equal_4() {
 #[test]
 pub fn greater_than_0() {
     let script = Script::from(vec![
-        CCL::Integer(1),
-        CCL::Integer(0),
+        CCL::IOIndex(1),
+        CCL::IOIndex(0),
         CCL::GreaterThan
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -485,7 +485,7 @@ pub fn greater_than_1() {
 pub fn greater_than_2() {
     let script = Script::from(vec![
         CCL::Boolean(true),
-        CCL::Integer(0),
+        CCL::IOIndex(0),
         CCL::GreaterThan
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -544,8 +544,8 @@ pub fn greater_than_4() {
 #[test]
 pub fn greater_than_equal_0() {
     let script = Script::from(vec![
-        CCL::Integer(0),
-        CCL::Integer(0),
+        CCL::IOIndex(0),
+        CCL::IOIndex(0),
         CCL::GreaterThanEqual
     ]);
     let mut machine = Machine::<CCL>::from(&script);
@@ -585,7 +585,7 @@ pub fn greater_than_equal_1() {
 pub fn greater_than_equal_2() {
     let script = Script::from(vec![
         CCL::Boolean(true),
-        CCL::Integer(0),
+        CCL::IOIndex(0),
         CCL::GreaterThanEqual
     ]);
     let mut machine = Machine::<CCL>::from(&script);

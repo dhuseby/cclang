@@ -98,7 +98,6 @@ pub enum CCLang<T, U, V>
 
     // data types
     Boolean(bool),
-    Integer(isize),
     Binary(Bytes),
     Text(String),
     EncodingId(Encoding),
@@ -107,6 +106,7 @@ pub enum CCLang<T, U, V>
     HashingId(Hashing),
     IOHandle(T),
     IOIdentifier(U),
+    IOIndex(isize),
     IOMode(Mode),
     IOWhence(Whence),
 
@@ -226,7 +226,6 @@ impl<T, U, V> fmt::Display for CCLang<T, U, V>
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             CCLang::Boolean(v) => write!(f, "{}", if *v { "TRUE" } else { "FALSE" }),
-            CCLang::Integer(v) => write!(f, "{}", v),
             CCLang::Binary(v) => write!(f, "{}", hex::encode(v.as_ref())),
             CCLang::Text(v) => write!(f, "{}", v),
             CCLang::EncodingId(encoding) => write!(f, "{}", encoding),
@@ -235,6 +234,7 @@ impl<T, U, V> fmt::Display for CCLang<T, U, V>
             CCLang::HashingId(hashing) => write!(f, "{}", hashing),
             CCLang::IOHandle(handle) => write!(f, "{}", handle),
             CCLang::IOIdentifier(id) => write!(f, "\"{}\"", id),
+            CCLang::IOIndex(v) => write!(f, "{}", v),
             CCLang::IOMode(mode) => write!(f, "{}", mode),
             CCLang::IOWhence(whence) => write!(f, "{}", whence),
             CCLang::Open(_) => write!(f, "OPEN"),
@@ -281,7 +281,6 @@ impl<T, U, V> Clone for CCLang<T, U, V>
     fn clone(&self) -> CCLang<T, U, V> {
         match self {
             CCLang::Boolean(v) => CCLang::Boolean(v.clone()),
-            CCLang::Integer(v) => CCLang::Integer(v.clone()),
             CCLang::Binary(v) => CCLang::Binary(v.clone()),
             CCLang::Text(v) => CCLang::Text(v.clone()),
             CCLang::EncodingId(encoding) => CCLang::EncodingId(encoding.clone()),
@@ -290,6 +289,7 @@ impl<T, U, V> Clone for CCLang<T, U, V>
             CCLang::HashingId(hashing) => CCLang::HashingId(hashing.clone()),
             CCLang::IOHandle(handle) => CCLang::IOHandle(handle.clone()),
             CCLang::IOIdentifier(id) => CCLang::IOIdentifier(id.clone()),
+            CCLang::IOIndex(v) => CCLang::IOIndex(v.clone()),
             CCLang::IOMode(mode) => CCLang::IOMode(mode.clone()),
             CCLang::IOWhence(whence) => CCLang::IOWhence(whence.clone()),
             CCLang::Open(io) => CCLang::Open(io.clone()),
@@ -337,20 +337,10 @@ impl<T, U, V> PartialEq for CCLang<T, U, V>
             CCLang::Boolean(l) => {
                 match other {
                     CCLang::Boolean(r) => *l == *r,
-                    CCLang::Integer(r) => {
+                    CCLang::IOIndex(r) => {
                         let rb = *r != 0;
                         *l == rb
                     },
-                    _ => false
-                }
-            },
-            CCLang::Integer(l) => {
-                match other {
-                    CCLang::Boolean(r) => {
-                        let lb = *l != 0;
-                        lb == *r
-                    },
-                    CCLang::Integer(r) => *l == *r,
                     _ => false
                 }
             },
@@ -402,6 +392,16 @@ impl<T, U, V> PartialEq for CCLang<T, U, V>
                     _ => false
                 }
             },
+            CCLang::IOIndex(l) => {
+                match other {
+                    CCLang::Boolean(r) => {
+                        let lb = *l != 0;
+                        lb == *r
+                    },
+                    CCLang::IOIndex(r) => *l == *r,
+                    _ => false,
+                }
+            }
             CCLang::IOMode(l) => {
                 match other {
                     CCLang::IOMode(r) => *l == *r,
@@ -459,20 +459,10 @@ impl<T, U, V> PartialOrd for CCLang<T, U, V>
             CCLang::Boolean(l) => {
                 match other {
                     CCLang::Boolean(r) => l.partial_cmp(r),
-                    CCLang::Integer(r) => {
+                    CCLang::IOIndex(r) => {
                         let rb = *r != 0;
                         l.partial_cmp(&rb)
                     },
-                    _ => None
-                }
-            },
-            CCLang::Integer(l) => {
-                match other {
-                    CCLang::Boolean(r) => {
-                        let ri = *r as isize;
-                        l.partial_cmp(&ri)
-                    },
-                    CCLang::Integer(r) => l.partial_cmp(r),
                     _ => None
                 }
             },
@@ -523,6 +513,16 @@ impl<T, U, V> PartialOrd for CCLang<T, U, V>
                     return l.partial_cmp(r);
                 }
                 None
+            },
+            CCLang::IOIndex(l) => {
+                match other {
+                    CCLang::Boolean(r) => {
+                        let ri = *r as isize;
+                        l.partial_cmp(&ri)
+                    },
+                    CCLang::IOIndex(r) => l.partial_cmp(r),
+                    _ => None
+                }
             },
             CCLang::IOMode(l) => {
                 if let CCLang::IOMode(r) = other {
@@ -579,7 +579,6 @@ impl<T, U, V> Instruction<CCLang<T, U, V>> for CCLang<T, U, V>
     fn execute(&self, m: &mut Machine<CCLang<T, U, V>>) -> Option<usize> {
         match self {
             CCLang::Boolean(_) |
-            CCLang::Integer(_) |
             CCLang::Binary(_) |
             CCLang::Text(_) |
             CCLang::EncodingId(_) |
@@ -588,6 +587,7 @@ impl<T, U, V> Instruction<CCLang<T, U, V>> for CCLang<T, U, V>
             CCLang::HashingId(_) |
             CCLang::IOHandle(_) |
             CCLang::IOIdentifier(_) |
+            CCLang::IOIndex(_) |
             CCLang::IOMode(_) |
             CCLang::IOWhence(_) => {
                 // just push the immediate constant onto the stack
@@ -778,8 +778,8 @@ impl<T, U, V> Instruction<CCLang<T, U, V>> for CCLang<T, U, V>
                 panic!()
             },
             CCLang::Slice => {
-                if let CCLang::Integer(end) = m.pop() {
-                    if let CCLang::Integer(begin) = m.pop() {
+                if let CCLang::IOIndex(end) = m.pop() {
+                    if let CCLang::IOIndex(begin) = m.pop() {
                         if let CCLang::Binary(b) = m.pop() {
                             m.push(CCLang::Binary(b.slice(begin as usize..end as usize)));
                             return m.next_ip();
@@ -798,7 +798,7 @@ impl<T, U, V> Instruction<CCLang<T, U, V>> for CCLang<T, U, V>
                 panic!();
             },
             CCLang::Read(io) => {
-                if let CCLang::Integer(num) = m.pop() {
+                if let CCLang::IOIndex(num) = m.pop() {
                     if let CCLang::IOHandle(h) = m.pop() {
                         m.push(CCLang::Binary(io.read(&h, num as usize)));
                         m.push(CCLang::IOHandle(h));
@@ -818,7 +818,7 @@ impl<T, U, V> Instruction<CCLang<T, U, V>> for CCLang<T, U, V>
                 panic!();
             },
             CCLang::Seek(io) => {
-                if let CCLang::Integer(num) = m.pop() {
+                if let CCLang::IOIndex(num) = m.pop() {
                     if let CCLang::IOWhence(whence) = m.pop() {
                         if let CCLang::IOHandle(h) = m.pop() {
                             io.seek(&h, whence, num);

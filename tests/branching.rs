@@ -62,20 +62,20 @@ fn simple_branching_0() {
     let script = Script::from(vec![
         CCL::Boolean(true),
         CCL::If,
-            CCL::Integer(1),
+            CCL::IOIndex(1),
         CCL::Else,
-            CCL::Integer(2),
+            CCL::IOIndex(2),
         CCL::Fi
     ]);
     let mut machine = Machine::<CCL>::from(&script);
     let mut result = machine.execute().unwrap();
 
-    // there should be a single Integer value on the stack
+    // there should be a single IOIndex value on the stack
     assert_eq!(result.size(), 1 as usize);
 
-    // the Integer should have the value of 1
+    // the IOIndex should have the value of 1
     match result.pop() {
-        Some(CCL::Integer(num)) => assert_eq!(num, 1),
+        Some(CCL::IOIndex(num)) => assert_eq!(num, 1),
         _ => panic!()
     }
 }
@@ -87,20 +87,20 @@ fn simple_branching_1() {
     let script = Script::from(vec![
         CCL::Boolean(false),
         CCL::If,
-            CCL::Integer(1),
+            CCL::IOIndex(1),
         CCL::Else,
-            CCL::Integer(2),
+            CCL::IOIndex(2),
         CCL::Fi
     ]);
     let mut machine = Machine::<CCL>::from(&script);
     let mut result = machine.execute().unwrap();
 
-    // there should be a single Integer value on the stack
+    // there should be a single IOIndex value on the stack
     assert_eq!(result.size(), 1 as usize);
 
-    // the Integer should have the value of 2
+    // the IOIndex should have the value of 2
     match result.pop() {
-        Some(CCL::Integer(num)) => assert_eq!(num, 2),
+        Some(CCL::IOIndex(num)) => assert_eq!(num, 2),
         _ => panic!()
     }
 }
@@ -112,24 +112,24 @@ fn nested_branching_0() {
     let script = Script::from(vec![
         CCL::Boolean(true),
         CCL::If,
-            CCL::Integer(1),
+            CCL::IOIndex(1),
             CCL::Boolean(true),
             CCL::If,
-                CCL::Integer(3),
+                CCL::IOIndex(3),
             CCL::Fi,
         CCL::Else,
-            CCL::Integer(2),
+            CCL::IOIndex(2),
         CCL::Fi
     ]);
     let mut machine = Machine::<CCL>::from(&script);
     let mut result = machine.execute().unwrap();
 
-    // there should be a single Integer value on the stack
+    // there should be a single IOIndex value on the stack
     assert_eq!(result.size(), 2 as usize);
 
-    // the Integer should have the value of 3
+    // the IOIndex should have the value of 3
     match result.pop() {
-        Some(CCL::Integer(num)) => assert_eq!(num, 3),
+        Some(CCL::IOIndex(num)) => assert_eq!(num, 3),
         _ => panic!()
     }
 }
@@ -141,26 +141,26 @@ fn nested_branching_1() {
     let script = Script::from(vec![
         CCL::Boolean(true),
         CCL::If,
-            CCL::Integer(1),
+            CCL::IOIndex(1),
             CCL::Boolean(false),
             CCL::If,
-                CCL::Integer(3),
+                CCL::IOIndex(3),
             CCL::Else,
-                CCL::Integer(4),
+                CCL::IOIndex(4),
             CCL::Fi,
         CCL::Else,
-            CCL::Integer(2),
+            CCL::IOIndex(2),
         CCL::Fi
     ]);
     let mut machine = Machine::<CCL>::from(&script);
     let mut result = machine.execute().unwrap();
 
-    // there should be a single Integer value on the stack
+    // there should be a single IOIndex value on the stack
     assert_eq!(result.size(), 2 as usize);
 
-    // the Integer should have the value of 4
+    // the IOIndex should have the value of 4
     match result.pop() {
-        Some(CCL::Integer(num)) => assert_eq!(num, 4),
+        Some(CCL::IOIndex(num)) => assert_eq!(num, 4),
         _ => panic!()
     }
 }
@@ -172,32 +172,32 @@ fn nested_branching_2() {
     let script = Script::from(vec![
         CCL::Boolean(false),
         CCL::If,
-            CCL::Integer(1),
+            CCL::IOIndex(1),
             CCL::Boolean(false),
             CCL::If,
-                CCL::Integer(3),
+                CCL::IOIndex(3),
             CCL::Else,
-                CCL::Integer(4),
+                CCL::IOIndex(4),
             CCL::Fi,
         CCL::Else,
-            CCL::Integer(2),
+            CCL::IOIndex(2),
             CCL::Boolean(true),
             CCL::If,
-                CCL::Integer(3),
+                CCL::IOIndex(3),
             CCL::Else,
-                CCL::Integer(4),
+                CCL::IOIndex(4),
             CCL::Fi,
         CCL::Fi
     ]);
     let mut machine = Machine::<CCL>::from(&script);
     let mut result = machine.execute().unwrap();
 
-    // there should be a single Integer value on the stack
+    // there should be a single IOIndex value on the stack
     assert_eq!(result.size(), 2 as usize);
 
-    // the Integer should have the value of 3
+    // the IOIndex should have the value of 3
     match result.pop() {
-        Some(CCL::Integer(num)) => assert_eq!(num, 3),
+        Some(CCL::IOIndex(num)) => assert_eq!(num, 3),
         _ => panic!()
     }
 }
@@ -209,32 +209,32 @@ fn nested_branching_3() {
     let script = Script::from(vec![
         CCL::Boolean(false),
         CCL::If,
-            CCL::Integer(1),
+            CCL::IOIndex(1),
             CCL::Boolean(false),
             CCL::If,
-                CCL::Integer(3),
+                CCL::IOIndex(3),
             CCL::Else,
-                CCL::Integer(4),
+                CCL::IOIndex(4),
             CCL::Fi,
         CCL::Else,
-            CCL::Integer(2),
+            CCL::IOIndex(2),
             CCL::Boolean(false),
             CCL::If,
-                CCL::Integer(3),
+                CCL::IOIndex(3),
             CCL::Else,
-                CCL::Integer(4),
+                CCL::IOIndex(4),
             CCL::Fi,
         CCL::Fi
     ]);
     let mut machine = Machine::<CCL>::from(&script);
     let mut result = machine.execute().unwrap();
 
-    // there should be a single Integer value on the stack
+    // there should be a single IOIndex value on the stack
     assert_eq!(result.size(), 2 as usize);
 
-    // the Integer should have the value of 4
+    // the IOIndex should have the value of 4
     match result.pop() {
-        Some(CCL::Integer(num)) => assert_eq!(num, 4),
+        Some(CCL::IOIndex(num)) => assert_eq!(num, 4),
         _ => panic!()
     }
 }

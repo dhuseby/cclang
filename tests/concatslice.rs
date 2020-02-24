@@ -114,8 +114,8 @@ pub fn slice() {
         CCL::Decode,
 
         // push the begin and end
-        CCL::Integer(0),
-        CCL::Integer(8),
+        CCL::IOIndex(0),
+        CCL::IOIndex(8),
 
         CCL::Slice,
        
