@@ -1,6 +1,6 @@
 [package]
 name = "cclang"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Dave Huseby"]
 edition = "2018"
 description = "An implementation of the crypto construct language"

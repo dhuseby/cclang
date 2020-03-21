@@ -91,9 +91,9 @@ impl fmt::Display for Hashing {
 }
 
 pub enum CCLang<T, U, V>
-    where T: Clone + PartialEq + PartialOrd,
-          U: Clone + PartialEq + PartialOrd,
-          V: AppIO<T, U> + Clone + PartialEq + PartialOrd
+    where T: Clone + PartialOrd,
+          U: Clone + PartialOrd,
+          V: AppIO<T, U> + Clone + PartialOrd
 {
 
     // data types
@@ -169,9 +169,9 @@ struct IfMatch {
 }
 
 impl<T, U, V> CCLang<T, U, V>
-    where T: Clone + PartialEq + PartialOrd,
-          U: Clone + PartialEq + PartialOrd,
-          V: AppIO<T, U> + Clone + PartialEq + PartialOrd,
+    where T: Clone + PartialOrd,
+          U: Clone + PartialOrd,
+          V: AppIO<T, U> + Clone + PartialOrd
 {
     fn find_matching_elsefi(&self, m: &Machine<CCLang<T, U, V>>, i: usize) -> Option<IfMatch> {
         let mut ret = IfMatch { ifi: i, elsei: None, fii: 0 };
@@ -219,9 +219,9 @@ impl<T, U, V> CCLang<T, U, V>
 }
 
 impl<T, U, V> fmt::Display for CCLang<T, U, V>
-    where T: Clone + PartialEq + PartialOrd + fmt::Display,
-          U: Clone + PartialEq + PartialOrd + fmt::Display,
-          V: AppIO<T, U> + Clone + PartialEq + PartialOrd + fmt::Display,
+    where T: Clone + PartialOrd + fmt::Display,
+          U: Clone + PartialOrd + fmt::Display,
+          V: AppIO<T, U> + Clone + PartialOrd + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -274,9 +274,9 @@ impl<T, U, V> fmt::Display for CCLang<T, U, V>
 
 
 impl<T, U, V> Clone for CCLang<T, U, V>
-    where T: Clone + PartialEq + PartialOrd,
-          U: Clone + PartialEq + PartialOrd,
-          V: AppIO<T, U> + Clone + PartialEq + PartialOrd
+    where T: Clone + PartialOrd,
+          U: Clone + PartialOrd,
+          V: AppIO<T, U> + Clone + PartialOrd
 {
     fn clone(&self) -> CCLang<T, U, V> {
         match self {
@@ -328,9 +328,9 @@ impl<T, U, V> Clone for CCLang<T, U, V>
 }
 
 impl<T, U, V> PartialEq for CCLang<T, U, V>
-    where T: Clone + PartialEq + PartialOrd,
-          U: Clone + PartialEq + PartialOrd,
-          V: AppIO<T, U> + Clone + PartialEq + PartialOrd
+    where T: Clone + PartialOrd,
+          U: Clone + PartialOrd,
+          V: AppIO<T, U> + Clone + PartialOrd
 {
     fn eq(&self, other: &Self) -> bool {
         match self {
@@ -450,9 +450,9 @@ impl<T, U, V> PartialEq for CCLang<T, U, V>
 }
 
 impl<T, U, V> PartialOrd for CCLang<T, U, V>
-    where T: Clone + PartialEq + PartialOrd,
-          U: Clone + PartialEq + PartialOrd,
-          V: AppIO<T, U> + Clone + PartialEq + PartialOrd
+    where T: Clone + PartialOrd,
+          U: Clone + PartialOrd,
+          V: AppIO<T, U> + Clone + PartialOrd
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match self {
@@ -572,9 +572,9 @@ impl<T, U, V> PartialOrd for CCLang<T, U, V>
 }
 
 impl<T, U, V> Instruction<CCLang<T, U, V>> for CCLang<T, U, V>
-    where T: Clone + PartialEq + PartialOrd,
-          U: Clone + PartialEq + PartialOrd,
-          V: AppIO<T, U> + Clone + PartialEq + PartialOrd
+    where T: Clone + PartialOrd,
+          U: Clone + PartialOrd,
+          V: AppIO<T, U> + Clone + PartialOrd
 {
     fn execute(&self, m: &mut Machine<CCLang<T, U, V>>) -> Option<usize> {
         match self {
