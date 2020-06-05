@@ -1,8 +1,19 @@
-pub mod appio;
-pub use crate::appio::{ AppIO, Whence, Mode };
-
 pub mod cclang;
-pub use crate::cclang::{ Encoding, Encryption, Signing, Hashing, CCLang };
+pub use crate::cclang::{
+	Encoding,
+	Encryption,
+	Signing,
+	Hashing,
+	IOHandle,
+	CCLang
+};
 
 // re-export GSM types
-pub use gsm::{ Instruction, Machine, Script, Stack };
+pub use gsm::{
+    AppIO,
+	Mode,
+	Whence,
+    Instruction,
+    Machine,
+    Script
+};

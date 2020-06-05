@@ -1,55 +1,42 @@
 use bytes::Bytes;
 use cclang::{
     AppIO,
-    Whence,
-    Mode,
     CCLang,
     Machine,
     Script
 };
-use std::clone::Clone;
-use std::cmp::{ PartialEq, PartialOrd };
+use std::{
+    clone::Clone,
+    cmp::{
+        PartialEq,
+        PartialOrd
+    },
+    io
+};
 
 #[derive(Clone, PartialEq, PartialOrd)]
-pub struct NullHandle {
-    identifier: String,
-    mode: Mode
+struct NullIO;
+
+impl AppIO<CCL> for NullIO {
+    fn open(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
+    fn read(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
+    fn write(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
+    fn seek(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
+    fn close(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
 }
 
-#[derive(Clone, PartialEq, PartialOrd)]
-pub struct NullIO;
-
-impl AppIO<NullHandle, String> for NullIO {
-    fn open(&self, id: &String, mode: Mode) -> NullHandle {
-        NullHandle {
-            identifier: id.to_string(),
-            mode: mode
-        }
-    }
-
-    fn read(&self, _h: &NullHandle, _num: usize) -> Bytes {
-        Bytes::new()
-    }
-
-    fn write(&self, _h: &NullHandle, _data: &Bytes) -> usize {
-        0
-    }
-
-    fn seek(&self, _h: &NullHandle, _whence: Whence, _num: isize) {}
-    fn close(&self, _h: &NullHandle) {}
-}
-
-type CCL = CCLang<NullHandle, String, NullIO>;
+type CCL = CCLang;
 
 #[test]
 pub fn equal_0() {
     let script = Script::from(vec![
-        CCL::IOIndex(0),
-        CCL::IOIndex(0),
+        CCL::Index(0),
+        CCL::Index(0),
         CCL::Equal
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -65,11 +52,12 @@ pub fn equal_0() {
 pub fn equal_1() {
     let script = Script::from(vec![
         CCL::Boolean(false),
-        CCL::IOIndex(0),
+        CCL::Index(0),
         CCL::Equal
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -85,11 +73,12 @@ pub fn equal_1() {
 pub fn equal_2() {
     let script = Script::from(vec![
         CCL::Boolean(true),
-        CCL::IOIndex(10),
+        CCL::Index(10),
         CCL::Equal
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -108,8 +97,9 @@ pub fn equal_3() {
         CCL::Text(String::from("Hello!")),
         CCL::Equal
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -128,8 +118,9 @@ pub fn equal_4() {
         CCL::Binary(Bytes::from(&b"Hello!"[..])),
         CCL::Equal
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -142,14 +133,61 @@ pub fn equal_4() {
 }
 
 #[test]
+pub fn equal_ser_0() {
+    let script = Script::from(vec![
+        CCL::Index(0),
+        CCL::Index(0),
+        CCL::Equal
+    ]);
+    let s = serde_json::to_string(&script).unwrap();
+    assert_eq!(s, r#""0 0 =""#);
+}
+
+#[test]
+pub fn equal_ser_1() {
+    let script = Script::from(vec![
+        CCL::Boolean(false),
+        CCL::Index(0),
+        CCL::Equal
+    ]);
+    let s = serde_json::to_string(&script).unwrap();
+    assert_eq!(s, r#""FALSE 0 =""#);
+}
+
+#[test]
+pub fn equal_de_0() {
+    let s1 = Script::from(vec![
+        CCL::Index(0),
+        CCL::Index(0),
+        CCL::Equal
+    ]);
+    let s = r#""0 0 =""#;
+    let s2: Script<CCL> = serde_json::from_str(s).unwrap();
+    assert_eq!(s1, s2);
+}
+
+#[test]
+pub fn equal_de_1() {
+    let s1 = Script::from(vec![
+        CCL::Boolean(false),
+        CCL::Index(0),
+        CCL::Equal
+    ]);
+    let s = r#""FALSE 0 =""#;
+    let s2: Script<CCL> = serde_json::from_str(s).unwrap();
+    assert_eq!(s1, s2);
+}
+
+#[test]
 pub fn not_equal_0() {
     let script = Script::from(vec![
-        CCL::IOIndex(0),
-        CCL::IOIndex(1),
+        CCL::Index(0),
+        CCL::Index(1),
         CCL::NotEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -168,8 +206,9 @@ pub fn not_equal_1() {
         CCL::Boolean(false),
         CCL::NotEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -185,11 +224,12 @@ pub fn not_equal_1() {
 pub fn not_equal_2() {
     let script = Script::from(vec![
         CCL::Boolean(true),
-        CCL::IOIndex(0),
+        CCL::Index(0),
         CCL::NotEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -208,8 +248,9 @@ pub fn not_equal_3() {
         CCL::Text(String::from("World!")),
         CCL::NotEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -228,8 +269,9 @@ pub fn not_equal_4() {
         CCL::Binary(Bytes::from(&b"World!"[..])),
         CCL::NotEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -244,12 +286,13 @@ pub fn not_equal_4() {
 #[test]
 pub fn less_than_0() {
     let script = Script::from(vec![
-        CCL::IOIndex(0),
-        CCL::IOIndex(1),
+        CCL::Index(0),
+        CCL::Index(1),
         CCL::LessThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -268,8 +311,9 @@ pub fn less_than_1() {
         CCL::Boolean(true),
         CCL::LessThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -284,12 +328,13 @@ pub fn less_than_1() {
 #[test]
 pub fn less_than_2() {
     let script = Script::from(vec![
-        CCL::IOIndex(0),
+        CCL::Index(0),
         CCL::Boolean(true),
         CCL::LessThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -308,8 +353,9 @@ pub fn less_than_3() {
         CCL::Text(String::from("World!")),
         CCL::LessThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -328,8 +374,9 @@ pub fn less_than_4() {
         CCL::Binary(Bytes::from(&b"World!"[..])),
         CCL::LessThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -344,12 +391,13 @@ pub fn less_than_4() {
 #[test]
 pub fn less_than_equal_0() {
     let script = Script::from(vec![
-        CCL::IOIndex(0),
-        CCL::IOIndex(0),
+        CCL::Index(0),
+        CCL::Index(0),
         CCL::LessThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -368,8 +416,9 @@ pub fn less_than_equal_1() {
         CCL::Boolean(true),
         CCL::LessThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -384,12 +433,13 @@ pub fn less_than_equal_1() {
 #[test]
 pub fn less_than_equal_2() {
     let script = Script::from(vec![
-        CCL::IOIndex(0),
+        CCL::Index(0),
         CCL::Boolean(true),
         CCL::LessThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -408,8 +458,9 @@ pub fn less_than_equal_3() {
         CCL::Text(String::from("Hello!")),
         CCL::LessThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -428,8 +479,9 @@ pub fn less_than_equal_4() {
         CCL::Binary(Bytes::from(&b"World!"[..])),
         CCL::LessThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -444,12 +496,13 @@ pub fn less_than_equal_4() {
 #[test]
 pub fn greater_than_0() {
     let script = Script::from(vec![
-        CCL::IOIndex(1),
-        CCL::IOIndex(0),
+        CCL::Index(1),
+        CCL::Index(0),
         CCL::GreaterThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -468,8 +521,9 @@ pub fn greater_than_1() {
         CCL::Boolean(false),
         CCL::GreaterThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -485,11 +539,12 @@ pub fn greater_than_1() {
 pub fn greater_than_2() {
     let script = Script::from(vec![
         CCL::Boolean(true),
-        CCL::IOIndex(0),
+        CCL::Index(0),
         CCL::GreaterThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -508,8 +563,9 @@ pub fn greater_than_3() {
         CCL::Text(String::from("Hello!")),
         CCL::GreaterThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -528,8 +584,9 @@ pub fn greater_than_4() {
         CCL::Binary(Bytes::from(&b"Hello!"[..])),
         CCL::GreaterThan
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -544,12 +601,13 @@ pub fn greater_than_4() {
 #[test]
 pub fn greater_than_equal_0() {
     let script = Script::from(vec![
-        CCL::IOIndex(0),
-        CCL::IOIndex(0),
+        CCL::Index(0),
+        CCL::Index(0),
         CCL::GreaterThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -568,8 +626,9 @@ pub fn greater_than_equal_1() {
         CCL::Boolean(false),
         CCL::GreaterThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -585,11 +644,12 @@ pub fn greater_than_equal_1() {
 pub fn greater_than_equal_2() {
     let script = Script::from(vec![
         CCL::Boolean(true),
-        CCL::IOIndex(0),
+        CCL::Index(0),
         CCL::GreaterThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -608,8 +668,9 @@ pub fn greater_than_equal_3() {
         CCL::Text(String::from("Hello!")),
         CCL::GreaterThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -628,8 +689,9 @@ pub fn greater_than_equal_4() {
         CCL::Binary(Bytes::from(&b"Hello!"[..])),
         CCL::GreaterThanEqual
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);

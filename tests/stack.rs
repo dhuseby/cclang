@@ -1,45 +1,30 @@
-use bytes::Bytes;
 use cclang::{
     AppIO,
-    Whence,
-    Mode,
     CCLang,
     Machine,
     Script
 };
-use std::clone::Clone;
-use std::cmp::{ PartialEq, PartialOrd };
+use std::{
+    clone::Clone,
+    cmp::{
+        PartialEq,
+        PartialOrd
+    },
+    io
+};
 
 #[derive(Clone, PartialEq, PartialOrd)]
-pub struct NullHandle {
-    identifier: String,
-    mode: Mode
+struct NullIO;
+
+impl AppIO<CCL> for NullIO {
+    fn open(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
+    fn read(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
+    fn write(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
+    fn seek(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
+    fn close(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
 }
 
-#[derive(Clone, PartialEq, PartialOrd)]
-pub struct NullIO;
-
-impl AppIO<NullHandle, String> for NullIO {
-    fn open(&self, id: &String, mode: Mode) -> NullHandle {
-        NullHandle {
-            identifier: id.to_string(),
-            mode: mode
-        }
-    }
-
-    fn read(&self, _h: &NullHandle, _num: usize) -> Bytes {
-        Bytes::new()
-    }
-
-    fn write(&self, _h: &NullHandle, _data: &Bytes) -> usize {
-        0
-    }
-
-    fn seek(&self, _h: &NullHandle, _whence: Whence, _num: isize) {}
-    fn close(&self, _h: &NullHandle) {}
-}
-
-type CCL = CCLang<NullHandle, String, NullIO>;
+type CCL = CCLang;
 
 #[test]
 pub fn stack_0() {
@@ -48,8 +33,9 @@ pub fn stack_0() {
         CCL::Boolean(false),
         CCL::Pop
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
@@ -67,8 +53,9 @@ pub fn stack_1() {
         CCL::Boolean(true),
         CCL::Dup
     ]);
-    let mut machine = Machine::<CCL>::from(&script);
-    let mut result = machine.execute().unwrap();
+    let mut machine = Machine::from(script);
+    let appio = NullIO;
+    let mut result = machine.execute(&appio).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 2 as usize);
@@ -84,6 +71,50 @@ pub fn stack_1() {
         Some(CCL::Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
+}
+
+#[test]
+pub fn stack_ser_0() {
+    let script = Script::from(vec![
+        CCL::Boolean(true),
+        CCL::Boolean(false),
+        CCL::Pop
+    ]);
+    let s = serde_json::to_string(&script).unwrap();
+    assert_eq!(s, r#""TRUE FALSE POP""#);
+}
+
+#[test]
+pub fn stack_ser_1() {
+    let script = Script::from(vec![
+        CCL::Boolean(true),
+        CCL::Dup
+    ]);
+    let s = serde_json::to_string(&script).unwrap();
+    assert_eq!(s, r#""TRUE DUP""#);
+}
+
+#[test]
+pub fn stack_de_0() {
+    let s1 = Script::from(vec![
+        CCL::Boolean(true),
+        CCL::Boolean(false),
+        CCL::Pop
+    ]);
+    let s = r#""TRUE FALSE POP""#;
+    let s2: Script<CCL> = serde_json::from_str(s).unwrap();
+    assert_eq!(s1, s2);
+}
+
+#[test]
+pub fn stack_de_1() {
+    let s1 = Script::from(vec![
+        CCL::Boolean(true),
+        CCL::Dup
+    ]);
+    let s = r#""TRUE DUP""#;
+    let s2: Script<CCL> = serde_json::from_str(s).unwrap();
+    assert_eq!(s1, s2);
 }
 
 
