@@ -1,12 +1,17 @@
 use base64;
 use bs58;
-use bytes::{ BufMut, BytesMut, Bytes };
+use bytes::{
+    BufMut,
+    BytesMut,
+    Bytes
+};
 use gsm::{
     AppIO,
     Instruction,
     Machine
 };
 use hex;
+use semver::Version;
 use serde::{
     de,
     Deserialize,
@@ -27,6 +32,7 @@ use sodiumoxide::crypto::sign::{
     verify_detached
 };
 use std::{
+    any::Any,
     cmp::Ordering,
     fmt,
     rc::Rc
@@ -192,11 +198,11 @@ impl fmt::Display for Hashing {
     }
 }
 
-pub trait IOHandle {}
-
 #[derive(Clone)]
 pub enum CCLang
 {
+    Version,
+
     // data types
     Boolean(bool),
     Binary(Bytes),
@@ -208,7 +214,7 @@ pub enum CCLang
 
     // I/O data types
     Index(isize),
-    Handle(Rc<dyn IOHandle>),
+    Handle(Rc<dyn Any>),
     Whence(gsm::Whence),
     Mode(gsm::Mode),
 
@@ -346,6 +352,7 @@ impl<'de> de::Visitor<'de> for CCLangVisitor {
         } else {
             let l = v.to_lowercase();
             match l.as_str() {
+                "cclang" => return Ok(CCLang::Version),
                 "true" => return Ok(CCLang::Boolean(true)),
                 "false" => return Ok(CCLang::Boolean(false)),
                 "open" => return Ok(CCLang::Open),
@@ -374,14 +381,11 @@ impl<'de> de::Visitor<'de> for CCLangVisitor {
                 "else" => return Ok(CCLang::Else),
                 "fi" => return Ok(CCLang::Fi),
                 &_ => {
-                    if let Ok(i) = v.parse::<isize>() {
-                        return Ok(CCLang::Index(i));
-                    /*
-                    } else if let Ok(h) = hex::decode(v) {
-                        return Ok(CCLang::Binary(Bytes::copy_from_slice(h.as_slice())));
-                    */
-                    } else {
-                        return Ok(CCLang::Text(v.to_string()));
+                    match v.parse::<isize>() {
+                        Ok(i) => return Ok(CCLang::Index(i)),
+                        _ => {
+                            return Ok(CCLang::Text(v.to_string()));
+                        }
                     }
                 }
             }
@@ -398,6 +402,7 @@ impl<'de> Deserialize<'de> for CCLang {
 impl fmt::Debug for CCLang {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            CCLang::Version => write!(f, "CCLANG"),
             CCLang::Boolean(v) => write!(f, "Boolean({})", if *v { "TRUE" } else { "FALSE" }),
             CCLang::Binary(v) => write!(f, "Binary({})", hex::encode(v.as_ref())),
             CCLang::Text(v) => write!(f, "Text({})", v),
@@ -447,8 +452,9 @@ impl fmt::Debug for CCLang {
 impl fmt::Display for CCLang {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            CCLang::Version => write!(f, "CCLANG"),
             CCLang::Boolean(v) => write!(f, "{}", if *v { "TRUE" } else { "FALSE" }),
-            CCLang::Binary(v) => write!(f, "{}", hex::encode(v.as_ref())),
+            CCLang::Binary(v) => write!(f, "{} {} {}", hex::encode(v.as_ref()), CCLang::EncodingId(Encoding::Hex), CCLang::Decode),
             CCLang::Text(v) => write!(f, "{}", v),
             CCLang::EncodingId(encoding) => write!(f, "{}", encoding),
             CCLang::EncryptionId(encryption) => write!(f, "{}", encryption),
@@ -496,6 +502,7 @@ impl fmt::Display for CCLang {
 impl PartialEq for CCLang {
     fn eq(&self, other: &Self) -> bool {
         match self {
+            CCLang::Version => { match other { CCLang::Version => true, _ => false } },
             CCLang::Boolean(l) => {
                 match other {
                     CCLang::Boolean(r) => *l == *r,
@@ -687,6 +694,16 @@ impl Instruction<CCLang> for CCLang {
     fn execute(&self, ip: usize, m: &mut Machine<CCLang>, io: &dyn AppIO<CCLang>) {
         match self {
             CCLang::Handle(_) => panic!(),
+            CCLang::Version => {
+                if let Some(CCLang::Text(s)) = m.pop() {
+                    if let Ok(v) = Version::parse(&s) {
+                        m.push(CCLang::Boolean(m.version_check(&v)));
+                        m.pushr(ip + 1);
+                        return;
+                    }
+                }
+                panic!();
+            },
             CCLang::Boolean(_) |
             CCLang::Binary(_) |
             CCLang::Text(_) |

@@ -4,8 +4,16 @@ pub use crate::cclang::{
 	Encryption,
 	Signing,
 	Hashing,
-	IOHandle,
 	CCLang
+};
+pub mod fileio;
+pub use crate::fileio::{
+	FileHandle,
+	FileIO
+};
+pub mod nullio;
+pub use crate::nullio::{
+	NullIO
 };
 
 // re-export GSM types
@@ -15,5 +23,6 @@ pub use gsm::{
 	Whence,
     Instruction,
     Machine,
+	MachineBuilder,
     Script
 };

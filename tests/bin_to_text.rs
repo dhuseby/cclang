@@ -1,35 +1,22 @@
 use bytes::{
- BufMut,
- BytesMut
+    BufMut,
+    BytesMut
 };
 use cclang::{
-    AppIO,
-    CCLang,
+    CCLang::{
+        Binary,
+        Boolean,
+        Decode,
+        Encode,
+        EncodingId,
+        Equal,
+        Text
+    },
     Encoding,
     Machine,
+    NullIO,
     Script
 };
-use std::{
-    clone::Clone,
-    cmp::{
-        PartialEq,
-        PartialOrd
-    },
-    io
-};
-
-#[derive(Clone, PartialEq, PartialOrd)]
-struct NullIO;
-
-impl AppIO<CCL> for NullIO {
-    fn open(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-    fn read(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-    fn write(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-    fn seek(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-    fn close(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-}
-
-type CCL = CCLang;
 
 /* TEST DATA:
 Hex:
@@ -65,26 +52,25 @@ pub fn decoding_hex() {
 
     let script = Script::from(vec![
         // push the expected binary
-        CCL::Binary(b.freeze()),
+        Binary(b.freeze()),
 
         // decode and push the binary
-        CCL::Text("0adb80d2fc4d74adb99059a596ba21706dada1e29fd855a664ce815f88e6b169".to_string()),
-        CCL::EncodingId(Encoding::Hex),
-        CCL::Decode,
+        Text("0adb80d2fc4d74adb99059a596ba21706dada1e29fd855a664ce815f88e6b169".to_string()),
+        EncodingId(Encoding::Hex),
+        Decode,
        
         // pop the decoded binary and the expected binary and compare
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
@@ -97,26 +83,25 @@ pub fn decoding_base64() {
 
     let script = Script::from(vec![
         // push the expected binary
-        CCL::Binary(b.freeze()),
+        Binary(b.freeze()),
 
         // decode and push the binary
-        CCL::Text("CtuA0vxNdK25kFmllrohcG2toeKf2FWmZM6BX4jmsWk=".to_string()),
-        CCL::EncodingId(Encoding::Base64),
-        CCL::Decode,
+        Text("CtuA0vxNdK25kFmllrohcG2toeKf2FWmZM6BX4jmsWk=".to_string()),
+        EncodingId(Encoding::Base64),
+        Decode,
        
         // pop the decoded binary and the expected binary and compare
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
@@ -129,26 +114,25 @@ pub fn decoding_base64url() {
 
     let script = Script::from(vec![
         // push the expected binary
-        CCL::Binary(b.freeze()),
+        Binary(b.freeze()),
 
         // decode and push the binary
-        CCL::Text("CtuA0vxNdK25kFmllrohcG2toeKf2FWmZM6BX4jmsWk=".to_string()),
-        CCL::EncodingId(Encoding::Base64Url),
-        CCL::Decode,
+        Text("CtuA0vxNdK25kFmllrohcG2toeKf2FWmZM6BX4jmsWk=".to_string()),
+        EncodingId(Encoding::Base64Url),
+        Decode,
        
         // pop the decoded binary and the expected binary and compare
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
@@ -161,26 +145,25 @@ pub fn decoding_base58bitcoin() {
 
     let script = Script::from(vec![
         // push the expected binary
-        CCL::Binary(b.freeze()),
+        Binary(b.freeze()),
 
         // decode and push the binary
-        CCL::Text("jPCzTz1V1QBgR1JxyxWQKwiSkjvSxaQsoVQBNFke7YL".to_string()),
-        CCL::EncodingId(Encoding::Base58Bitcoin),
-        CCL::Decode,
+        Text("jPCzTz1V1QBgR1JxyxWQKwiSkjvSxaQsoVQBNFke7YL".to_string()),
+        EncodingId(Encoding::Base58Bitcoin),
+        Decode,
        
         // pop the decoded binary and the expected binary and compare
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
@@ -193,26 +176,25 @@ pub fn encoding_hex() {
 
     let script = Script::from(vec![
         // push the expected string
-        CCL::Text("0adb80d2fc4d74adb99059a596ba21706dada1e29fd855a664ce815f88e6b169".to_string()),
+        Text("0adb80d2fc4d74adb99059a596ba21706dada1e29fd855a664ce815f88e6b169".to_string()),
 
         // encode and push the string
-        CCL::Binary(b.freeze()),
-        CCL::EncodingId(Encoding::Hex),
-        CCL::Encode,
+        Binary(b.freeze()),
+        EncodingId(Encoding::Hex),
+        Encode,
        
         // pop the decoded binary and the expected binary and compare
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
@@ -225,26 +207,25 @@ pub fn encoding_base64() {
 
     let script = Script::from(vec![
         // push the expected string
-        CCL::Text("CtuA0vxNdK25kFmllrohcG2toeKf2FWmZM6BX4jmsWk=".to_string()),
+        Text("CtuA0vxNdK25kFmllrohcG2toeKf2FWmZM6BX4jmsWk=".to_string()),
 
         // encode and push the string
-        CCL::Binary(b.freeze()),
-        CCL::EncodingId(Encoding::Base64),
-        CCL::Encode,
+        Binary(b.freeze()),
+        EncodingId(Encoding::Base64),
+        Encode,
        
         // pop the decoded binary and the expected binary and compare
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
@@ -257,26 +238,25 @@ pub fn encoding_base64url() {
 
     let script = Script::from(vec![
         // push the expected string
-        CCL::Text("CtuA0vxNdK25kFmllrohcG2toeKf2FWmZM6BX4jmsWk=".to_string()),
+        Text("CtuA0vxNdK25kFmllrohcG2toeKf2FWmZM6BX4jmsWk=".to_string()),
 
         // encode and push the string
-        CCL::Binary(b.freeze()),
-        CCL::EncodingId(Encoding::Base64Url),
-        CCL::Encode,
+        Binary(b.freeze()),
+        EncodingId(Encoding::Base64Url),
+        Encode,
        
         // pop the decoded binary and the expected binary and compare
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
@@ -289,26 +269,25 @@ pub fn encoding_base58bitcoin() {
 
     let script = Script::from(vec![
         // push the expected string
-        CCL::Text("jPCzTz1V1QBgR1JxyxWQKwiSkjvSxaQsoVQBNFke7YL".to_string()),
+        Text("jPCzTz1V1QBgR1JxyxWQKwiSkjvSxaQsoVQBNFke7YL".to_string()),
 
         // encode and push the string
-        CCL::Binary(b.freeze()),
-        CCL::EncodingId(Encoding::Base58Bitcoin),
-        CCL::Encode,
+        Binary(b.freeze()),
+        EncodingId(Encoding::Base58Bitcoin),
+        Encode,
        
         // pop the decoded binary and the expected binary and compare
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }

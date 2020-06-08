@@ -1,32 +1,20 @@
 use cclang::{
-    AppIO,
-    CCLang,
-    Encoding,
-    Signing,
-    Machine,
-    Script
-};
-use std::{
-    clone::Clone,
-    cmp::{
-        PartialEq,
-        PartialOrd
+    CCLang::{
+        Boolean,
+        Decode,
+        EncodingId,
+        Equal,
+        Sign,
+        SigningId,
+        Text,
+        Verify
     },
-    io
+    Encoding,
+    Machine,
+    NullIO,
+    Script,
+    Signing
 };
-
-#[derive(Clone, PartialEq, PartialOrd)]
-struct NullIO;
-
-impl AppIO<CCL> for NullIO {
-    fn open(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-    fn read(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-    fn write(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-    fn seek(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-    fn close(&self, _m: &mut Machine<CCL>) -> io::Result<()> { Ok(()) }
-}
-
-type CCL = CCLang;
 
 /* TEST DATA
  * msg:
@@ -40,39 +28,38 @@ type CCL = CCLang;
 pub fn signing_0() {
     let script = Script::from(vec![
         // decode and push the expected signature
-        CCL::Text("df087999d4d9d01f97de110daf50dca0f422ebe624d20196820a0a97e49314c366dede0f4a3d869872c4d841910b14460a4c47fbb513f2bf82a7de9fc746a70b".to_string()),
-        CCL::EncodingId(Encoding::Hex),
-        CCL::Decode,
+        Text("df087999d4d9d01f97de110daf50dca0f422ebe624d20196820a0a97e49314c366dede0f4a3d869872c4d841910b14460a4c47fbb513f2bf82a7de9fc746a70b".to_string()),
+        EncodingId(Encoding::Hex),
+        Decode,
 
         // decode and push the message to be sign
-        CCL::Text("7ccf1a3dd89255b11007df39110fa0e83b95030bf3b8b9113d3e0117a24770bc0bf4e61f780e949df0924ade33380dd000b42f394b9e7c0d3191d977df99e83f".to_string()),
-        CCL::EncodingId(Encoding::Hex),
-        CCL::Decode,
+        Text("7ccf1a3dd89255b11007df39110fa0e83b95030bf3b8b9113d3e0117a24770bc0bf4e61f780e949df0924ade33380dd000b42f394b9e7c0d3191d977df99e83f".to_string()),
+        EncodingId(Encoding::Hex),
+        Decode,
 
         // decode and push the secret key to sign with
-        CCL::Text("d2acb699a7e41806bdb3d4400a6ace771e5e6e079117fa941255014ea433e7b02eb9136429881b23cfdb02fba18422e2467ba0fa78527cf2d96c0791b2827a10".to_string()),
-        CCL::EncodingId(Encoding::Hex),
-        CCL::Decode,
+        Text("d2acb699a7e41806bdb3d4400a6ace771e5e6e079117fa941255014ea433e7b02eb9136429881b23cfdb02fba18422e2467ba0fa78527cf2d96c0791b2827a10".to_string()),
+        EncodingId(Encoding::Hex),
+        Decode,
 
         // push the Ed25519 signature algorithm identifier
-        CCL::SigningId(Signing::Ed25519),
+        SigningId(Signing::Ed25519),
 
         // pop the identifier, secret key, and message, sign it and push the signature
-        CCL::Sign,
+        Sign,
 
         // pop the generated signature and the expected signature and check for equal, push a bool
-        CCL::Equal
+        Equal
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
@@ -81,36 +68,35 @@ pub fn signing_0() {
 pub fn verifying_0() {
     let script = Script::from(vec![
         // decode and push the signature
-        CCL::Text("df087999d4d9d01f97de110daf50dca0f422ebe624d20196820a0a97e49314c366dede0f4a3d869872c4d841910b14460a4c47fbb513f2bf82a7de9fc746a70b".to_string()),
-        CCL::EncodingId(Encoding::Hex),
-        CCL::Decode,
+        Text("df087999d4d9d01f97de110daf50dca0f422ebe624d20196820a0a97e49314c366dede0f4a3d869872c4d841910b14460a4c47fbb513f2bf82a7de9fc746a70b".to_string()),
+        EncodingId(Encoding::Hex),
+        Decode,
 
         // decode and push the public key
-        CCL::Text("2eb9136429881b23cfdb02fba18422e2467ba0fa78527cf2d96c0791b2827a10".to_string()),
-        CCL::EncodingId(Encoding::Hex),
-        CCL::Decode,
+        Text("2eb9136429881b23cfdb02fba18422e2467ba0fa78527cf2d96c0791b2827a10".to_string()),
+        EncodingId(Encoding::Hex),
+        Decode,
 
         // decode and push the message
-        CCL::Text("7ccf1a3dd89255b11007df39110fa0e83b95030bf3b8b9113d3e0117a24770bc0bf4e61f780e949df0924ade33380dd000b42f394b9e7c0d3191d977df99e83f".to_string()),
-        CCL::EncodingId(Encoding::Hex),
-        CCL::Decode,
+        Text("7ccf1a3dd89255b11007df39110fa0e83b95030bf3b8b9113d3e0117a24770bc0bf4e61f780e949df0924ade33380dd000b42f394b9e7c0d3191d977df99e83f".to_string()),
+        EncodingId(Encoding::Hex),
+        Decode,
 
         // push the Ed25519 signing algorithm identifier
-        CCL::SigningId(Signing::Ed25519),
+        SigningId(Signing::Ed25519),
 
         // pop the identifier, message, pub key, and signature, verify and push boolean result
-        CCL::Verify
+        Verify
     ]);
     let mut machine = Machine::from(script);
-    let appio = NullIO;
-    let mut result = machine.execute(&appio).unwrap();
+    let mut result = machine.execute(&NullIO).unwrap();
 
     // should only be one item left on the stack
     assert_eq!(result.size(), 1 as usize);
 
     // the result should be a boolean with the value true
     match result.pop() {
-        Some(CCL::Boolean(b)) => assert_eq!(b, true),
+        Some(Boolean(b)) => assert_eq!(b, true),
         _ => panic!()
     }
 }
